@@ -1,0 +1,9 @@
+# Cypress Docker
+
+This example demonstrates how to run Cypress in a Docker container. It uses the official `cypress/included` image which contains all necessary dependencies.
+
+This supports running both GUI and CLI versions from a Docker container.
+
+It is important to give Docker permissions to access X11 using `$ xhost +local:docker` before running Cypress.
+
+Run the tests using `bin/test` CLI command. See `bin/test --help` for options.

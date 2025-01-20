@@ -1,0 +1,125 @@
+#!/bin/bash
+
+# Cypress Docker Test Runner
+#
+# Usage:
+#   test [OPTIONS]
+#
+# Description:
+#   This script serves as a unified interface to run Cypress tests in a Docker container. 
+#   Developers can choose between GUI and CLI modes or specify individual test specs for execution.
+#
+# Options:
+#   --gui                Run tests in GUI mode (default if no option is provided).
+#   --cli [spec pattern] Run tests in CLI mode. Optionally provide a specific test spec to run.
+#   --help               Display this help message.
+#
+# Examples:
+#   Run all tests in GUI mode (default):
+#     test
+#
+#   Run all tests in CLI mode:
+#     test --cli
+#
+#   Run a specific test in CLI mode:
+#     test --cli e2e/2-advanced-examples/actions.cy.js
+#
+# Notes:
+#   - Ensure Docker is running before executing this script.
+#   - The Docker container will be started automatically if it is not already running.
+#   - To enable GUI mode, grant Docker access to X11 using the following command:
+#       $ xhost +local:docker
+#
+#   For further details, refer to the project README.md.
+
+GREEN="\033[0;32m"
+YELLOW="\033[0;33m"
+RED="\033[0;31m"
+CYAN="\033[0;36m"
+RESET="\033[0m"
+CHECKMARK="✔"
+CROSSMARK="✖"
+INFO="[info] "
+
+# Help menu
+show_help() {
+    echo -e "${CYAN}Cypress Docker Test Runner${RESET}"
+    echo ""
+    echo -e "${GREEN}Usage:${RESET} test [options]"
+    echo ""
+    echo -e "${YELLOW}Options:${RESET}"
+    echo -e "  ${GREEN}--gui${RESET}                Run tests in GUI mode (default)"
+    echo -e "  ${GREEN}--cli${RESET} [spec pattern] Run tests in CLI mode. Optionally provide a specific test spec to run."
+    echo -e "  ${GREEN}--help${RESET}               Show this help message"
+    echo ""
+    echo -e "Example: Run specific test in CLI mode"
+    echo -e "  ${GREEN}test --cli e2e/2-advanced-examples/actions.cy.js${RESET}"
+}
+
+# Ensure Docker container is running
+ensure_container_running() {
+    echo -e "${INFO} Checking if Docker container is running...${RESET}"
+    if ! docker ps --filter "name=cypress-container" --format '{{.Names}}' | grep -q "^cypress-container$"; then
+        echo -e "${YELLOW}${CROSSMARK} Cypress container is not running. Starting it...${RESET}"
+        docker-compose up -d
+        echo -e "${GREEN}${CHECKMARK} Cypress container started.${RESET}"
+    else
+        echo -e "${GREEN}${CHECKMARK} Cypress container is already running.${RESET}"
+    fi
+}
+
+# Run Cypress in GUI mode
+run_gui() {
+    echo -e "${INFO} Running Cypress in GUI mode...${RESET}"
+    xhost +local:docker
+    docker exec -it cypress-container cypress open
+}
+
+# Run Cypress in CLI mode
+run_cli() {
+    local spec="$1"
+    if [ -z "$spec" ]; then
+        echo -e "${INFO} Running all tests in CLI mode...${RESET}"
+        docker exec -w /e2e/cypress -it cypress-container cypress run
+    else
+        echo -e "${INFO} Running specified test: ${CYAN}$spec${RESET}"
+        docker exec -w /e2e/cypress -it cypress-container cypress run --spec "$spec"
+    fi
+}
+
+# Parse arguments
+if [[ $# -eq 0 ]]; then
+    # Default to GUI mode
+    ensure_container_running
+    run_gui
+else
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --gui)
+                ensure_container_running
+                run_gui
+                exit 0
+                ;;
+            --cli)
+                ensure_container_running
+                if [[ -n "$2" && ! "$2" =~ ^-- ]]; then
+                    run_cli "$2"
+                    shift 2
+                else
+                    run_cli
+                    shift
+                fi
+                exit 0
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}${CROSSMARK} Invalid option: $1${RESET}"
+                show_help
+                exit 1
+                ;;
+        esac
+    done
+fi

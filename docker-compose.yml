@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  cypress-container:
+    build: .
+    container_name: cypress-container
+    network_mode: "host" # Enables GUI to connect to host's X server
+    environment:
+      - DISPLAY=${DISPLAY} # Pass DISPLAY from host
+    volumes:
+      - ~/.Xauthority:/root/.Xauthority:ro # X authentication
+      - ./app:/e2e # Mount project directory
+    ipc: "host" # Prevent memory issues with Chrome
+    stdin_open: true # Keep STDIN open for interactive mode
+    tty: true # Allocate a pseudo-TTY
