@@ -63,7 +63,7 @@ context('Files', () => {
     // generate a fixture file for use later
     cy.request('https://jsonplaceholder.cypress.io/users')
       .then((response) => {
-        cy.writeFile('cypress/fixtures/users.json', response.body)
+        cy.writeFile('fixtures/users.json', response.body)
       })
 
     cy.fixture('users').should((users) => {
@@ -72,7 +72,7 @@ context('Files', () => {
 
     // JavaScript arrays and objects are stringified
     // and formatted into text.
-    cy.writeFile('cypress/fixtures/profile.json', {
+    cy.writeFile('fixtures/profile.json', {
       id: 8739,
       name: 'Jane',
       email: 'jane@example.com',
