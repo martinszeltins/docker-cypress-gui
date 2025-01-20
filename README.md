@@ -7,3 +7,5 @@ This supports running both GUI and CLI versions from a Docker container.
 It is important to give Docker permissions to access X11 using `$ xhost +local:docker` before running Cypress.
 
 Run the tests using `bin/test` CLI command. See `bin/test --help` for options.
+
+[info] When running Cypress GUI for the first time, it will ask you to select the project. Select e2e/cypress directory.
